@@ -1,12 +1,12 @@
 import hashlib
-from py_ecc.secp256k1 import *
-import sha3
-import ecdsa
 import os
-from eth_account import Account
-from typing import NewType
-from functools import wraps
 from dataclasses import dataclass
+from functools import wraps
+from typing import NewType
+
+import ecdsa
+import sha3
+from py_ecc.secp256k1 import secp256k1
 
 SECP256K1_ORDER = int(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141)
 
@@ -122,7 +122,6 @@ def pubkey_to_address(publicKey: PublicKey) -> EthAddress:
         ).hexdigest()[-40:]
     )
 
-
 @pfn
 def parse_stealth_meta_address(stealthMetaAddress: StealthMetaAddress) -> (PublicKey):
     # Parse a stealth meta address and return the spending and scanning public keys
@@ -199,9 +198,9 @@ def generate_stealth_address_info_from_meta_address(
     ephemeralPrivateKey: PrivateKey
 ) -> (EthAddress, PublicKey, ViewTag):
     publicKeySpending, publicKeyScanning = parse_stealth_meta_address(stealthMetaAddress)
-    return compute_stealth_address_from_recipient_info(publicKeySpending, publicKeyScanning, ephemeralPrivateKey)
+    return compute_stealth_address_from_recipient_info(publicKeySpending, publicKeyScanning, ephemeralPrivateKey)  
     
-    
+@pfn
 def parse_single_event(pubkey, stA, viewtag, scanningPrivateKey, spendingPublicKey):
     # Check if inputed stealth address matches the derived one
     dhSecret = compute_dh_secret(pubkey, scanningPrivateKey)
@@ -216,6 +215,7 @@ def parse_single_event(pubkey, stA, viewtag, scanningPrivateKey, spendingPublicK
         print(f"Stealth address found | {stA}")
         return dhSecretHash, stA
     return None, stA
+
 @pfn
 def parse(
     publicKeys: [PublicKey], 
@@ -240,5 +240,4 @@ def compute_stealth_address_private_key(
     spendingPrivateKey: PrivateKey
 ) -> [PrivateKey]:
     # Derive stealth address private keys from the spending private key and the inputed dh secrets
-    return [(spendingPrivateKey + dh_secret) % SECP256K1_ORDER for dh_secret in dhSecrets]
-        
+    return [(spendingPrivateKey + dh_secret) % SECP256K1_ORDER for dh_secret in dhSecrets]     
